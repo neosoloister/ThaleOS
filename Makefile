@@ -20,6 +20,8 @@ STAGE2_ASM := src/boot/stage2.asm
 
 KENTRY_ASM := src/boot/kernel_entry.asm
 KERNEL_C   := src/kernel/kernel.c
+VGA_C      := src/driver/vga.c
+
 LINKER_LD  := linker.ld
 
 MBR_BIN    := $(BUILD)/mbr.bin
@@ -27,6 +29,8 @@ STAGE2_BIN := $(BUILD)/stage2.bin
 
 KENTRY_O   := $(BUILD)/kernel_entry.o
 KERNEL_O   := $(BUILD)/kernel.o
+VGA_O      := $(BUILD)/vga.o
+
 KERNEL_ELF := $(BUILD)/kernel.elf
 KERNEL_BIN := $(BUILD)/kernel.bin
 
@@ -93,8 +97,11 @@ $(KENTRY_O): $(KENTRY_ASM) | $(BUILD)
 $(KERNEL_O): $(KERNEL_C) | $(BUILD)
 	$(CC) $(CFLAGS) -c $(KERNEL_C) -o $(KERNEL_O)
 
-$(KERNEL_ELF): $(KENTRY_O) $(KERNEL_O) $(LINKER_LD) | $(BUILD)
-	$(LD) $(LDFLAGS) -o $(KERNEL_ELF) $(KENTRY_O) $(KERNEL_O)
+$(VGA_O): $(VGA_C) | $(BUILD)
+	$(CC) $(CFLAGS) -c $(VGA_C) -o $(VGA_O)
+
+$(KERNEL_ELF): $(KENTRY_O) $(KERNEL_O) $(VGA_O) $(LINKER_LD) | $(BUILD)
+	$(LD) $(LDFLAGS) -o $(KERNEL_ELF) $(KENTRY_O) $(KERNEL_O) $(VGA_O)
 
 $(KERNEL_BIN): $(KERNEL_ELF) | $(BUILD)
 	$(OBJCOPY) -O binary $(KERNEL_ELF) $(KERNEL_BIN)
@@ -110,7 +117,7 @@ $(IMG): $(MBR_BIN) $(STAGE2_BIN) $(KERNEL_BIN) | $(BUILD)
 	echo "[img] kernel sectors: $$KERNEL_SECTORS"; \
 	rm -f $(IMG); \
 	dd if=/dev/zero of=$(IMG) bs=1M count=16 status=none; \
-	dd if=$(MBR_BIN)   of=$(IMG) conv=notrunc bs=$(SECTOR_SIZE) seek=0 status=none; \
+	dd if=$(MBR_BIN)    of=$(IMG) conv=notrunc bs=$(SECTOR_SIZE) seek=0 status=none; \
 	dd if=$(STAGE2_BIN) of=$(IMG) conv=notrunc bs=$(SECTOR_SIZE) seek=1 status=none; \
 	dd if=$(KERNEL_BIN) of=$(IMG) conv=notrunc bs=$(SECTOR_SIZE) seek=$(KERNEL_LBA) status=none
 
