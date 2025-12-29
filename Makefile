@@ -17,10 +17,7 @@ IMG        := $(BUILD)/os.img
 
 MBR_ASM    := src/boot/mbr.asm
 STAGE2_ASM := src/boot/stage2.asm
-
 KENTRY_ASM := src/boot/kernel_entry.asm
-KERNEL_C   := src/kernel/kernel.c
-VGA_C      := src/driver/vga.c
 
 LINKER_LD  := linker.ld
 
@@ -28,8 +25,6 @@ MBR_BIN    := $(BUILD)/mbr.bin
 STAGE2_BIN := $(BUILD)/stage2.bin
 
 KENTRY_O   := $(BUILD)/kernel_entry.o
-KERNEL_O   := $(BUILD)/kernel.o
-VGA_O      := $(BUILD)/vga.o
 
 KERNEL_ELF := $(BUILD)/kernel.elf
 KERNEL_BIN := $(BUILD)/kernel.bin
@@ -42,7 +37,12 @@ KERNEL_LBA         := $(shell echo $$((1 + $(STAGE2_PAD_SECTORS))))
 # ---- flags ----
 CFLAGS := -std=gnu11 -O2 -g -ffreestanding -fno-pie -fno-pic -fno-stack-protector \
           -Wall -Wextra -Werror -m32 -I./src -I./src/lib -I./src/cpu
+
 LDFLAGS := -m elf_i386 -T $(LINKER_LD)
+
+# ---- auto collect kernel C sources (everything except src/boot) ----
+C_SRCS := $(shell find src -type f -name '*.c' ! -path 'src/boot/*')
+C_OBJS := $(patsubst src/%.c,$(BUILD)/%.o,$(C_SRCS))
 
 .PHONY: all run clean print-vars
 
@@ -51,7 +51,7 @@ all: $(IMG)
 # =========================
 # Linker script (1 MiB load)
 # =========================
-# If you already have your own linker.ld, delete this section or replace content.
+# If you already have your own linker.ld, delete this rule or replace content.
 $(LINKER_LD):
 	@printf '%s\n' \
 'ENTRY(_start)' \
@@ -65,11 +65,14 @@ $(LINKER_LD):
 '}' > $(LINKER_LD)
 
 # =========
-# Boot parts
+# Build dir
 # =========
 $(BUILD):
 	mkdir -p $(BUILD)
 
+# =========
+# Boot parts
+# =========
 $(MBR_BIN): $(MBR_ASM) | $(BUILD)
 	$(NASM) -f bin \
 	  -D__STAGE2_SECTORS__=$(STAGE2_PAD_SECTORS) \
@@ -94,14 +97,14 @@ $(STAGE2_BIN): $(STAGE2_ASM) $(KERNEL_BIN) | $(BUILD)
 $(KENTRY_O): $(KENTRY_ASM) | $(BUILD)
 	$(NASM) -f elf32 $(KENTRY_ASM) -o $(KENTRY_O)
 
-$(KERNEL_O): $(KERNEL_C) | $(BUILD)
-	$(CC) $(CFLAGS) -c $(KERNEL_C) -o $(KERNEL_O)
+# Pattern rule: compile any src/.../*.c to build/.../*.o (and create folders)
+$(BUILD)/%.o: src/%.c | $(BUILD)
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(VGA_O): $(VGA_C) | $(BUILD)
-	$(CC) $(CFLAGS) -c $(VGA_C) -o $(VGA_O)
-
-$(KERNEL_ELF): $(KENTRY_O) $(KERNEL_O) $(VGA_O) $(LINKER_LD) | $(BUILD)
-	$(LD) $(LDFLAGS) -o $(KERNEL_ELF) $(KENTRY_O) $(KERNEL_O) $(VGA_O)
+# Link kernel.elf from entry + all compiled C objects
+$(KERNEL_ELF): $(KENTRY_O) $(C_OBJS) $(LINKER_LD) | $(BUILD)
+	$(LD) $(LDFLAGS) -o $(KERNEL_ELF) $(KENTRY_O) $(C_OBJS)
 
 $(KERNEL_BIN): $(KERNEL_ELF) | $(BUILD)
 	$(OBJCOPY) -O binary $(KERNEL_ELF) $(KERNEL_BIN)
@@ -127,6 +130,8 @@ run: $(IMG)
 print-vars:
 	@echo "STAGE2_PAD_SECTORS=$(STAGE2_PAD_SECTORS)"
 	@echo "KERNEL_LBA=$(KERNEL_LBA)"
+	@echo "C_SRCS=$(C_SRCS)"
+	@echo "C_OBJS=$(C_OBJS)"
 
 clean:
 	rm -rf $(BUILD) $(LINKER_LD)
