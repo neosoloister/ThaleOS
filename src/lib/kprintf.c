@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-void itoa (int num) {
+static void itoa (int num) {
     char buff[12];
     bool sign = 0;
     int i = 0;
@@ -26,7 +26,19 @@ void itoa (int num) {
     vga_write(buff);
 }
 
-void kprintf(char *fmt, ...) {
+static void htoa (uint32_t hex) {
+    static const char digits[] = "0123456789ABCDEF";
+    char buff[9];
+
+    for (int i = 7; i >= 0; --i) {
+        buff[i] = digits[hex & 0xF];
+        hex >>= 4;
+    }
+    buff[8] = '\0';
+    vga_write(buff);
+}
+
+void kprintf (char *fmt, ...) {
     va_list args;
 
     va_start(args, fmt);
@@ -52,6 +64,17 @@ void kprintf(char *fmt, ...) {
         case 's': {
             char *s = va_arg(args, char *);
             vga_write(s ? s : "(null)");
+            break;
+        }
+        case 'x': {
+            uint32_t x = va_arg(args, uint32_t);
+            htoa(x);
+            break;
+        }
+        case 'p': {
+            void *p = va_arg(args, void *);
+            vga_write("0x");
+            htoa((uint32_t)p);
             break;
         }
         case '%': {
