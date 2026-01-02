@@ -44,6 +44,9 @@ LDFLAGS := -m elf_i386 -T $(LINKER_LD)
 C_SRCS := $(shell find src -type f -name '*.c' ! -path 'src/boot/*')
 C_OBJS := $(patsubst src/%.c,$(BUILD)/%.o,$(C_SRCS))
 
+ASM_SRCS := $(shell find src -type f -name '*.asm' ! -path 'src/boot/*')
+ASM_OBJS := $(patsubst src/%.asm,$(BUILD)/%.o,$(ASM_SRCS))
+
 .PHONY: all run clean print-vars
 
 all: $(IMG)
@@ -102,9 +105,13 @@ $(BUILD)/%.o: src/%.c | $(BUILD)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD)/%.o: src/%.asm | $(BUILD)
+	@mkdir -p $(@D)
+	$(NASM) -f elf32 $< -o $@
+
 # Link kernel.elf from entry + all compiled C objects
-$(KERNEL_ELF): $(KENTRY_O) $(C_OBJS) $(LINKER_LD) | $(BUILD)
-	$(LD) $(LDFLAGS) -o $(KERNEL_ELF) $(KENTRY_O) $(C_OBJS)
+$(KERNEL_ELF): $(KENTRY_O) $(C_OBJS) $(ASM_OBJS) $(LINKER_LD) | $(BUILD)
+	$(LD) $(LDFLAGS) -o $(KERNEL_ELF) $(KENTRY_O) $(C_OBJS) $(ASM_OBJS)
 
 $(KERNEL_BIN): $(KERNEL_ELF) | $(BUILD)
 	$(OBJCOPY) -O binary $(KERNEL_ELF) $(KERNEL_BIN)

@@ -1,4 +1,3 @@
-; src/kernel_entry.asm
 [BITS 32]
 
 GLOBAL _start

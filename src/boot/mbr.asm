@@ -1,4 +1,3 @@
-; src/boot.asm
 [org 0x7C00]
 [BITS 16]
 

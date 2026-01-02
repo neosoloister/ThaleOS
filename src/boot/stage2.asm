@@ -1,4 +1,3 @@
-; src/stage2.asm
 [org 0x8000]
 [BITS 16]
 
