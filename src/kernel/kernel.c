@@ -12,14 +12,19 @@ void kernel_main(void) {
     __asm__ __volatile__("sti");
 
     vga_clear();
+    vga_fill(VGA_YELLOW, VGA_BLUE);
     vga_set_attr(VGA_YELLOW, VGA_BLUE);
     
     kprintf("Testing interrupts...\n");
     __asm__ __volatile__("int $0");
     kprintf("Back from interrupt!\n");
 
-    int x[3] = {10, 20, 30};
-    for (int i = 0; i < 3; i++) {
-        kprintf("x = %d at %p\n", x[i], x[i]);
+    kprintf("Type something!\n");
+    
+    while (1) {
+        char c = keyboard_getc();
+        if (c != 0) {
+            kprintf("%c", c);
+        }
     }
 }

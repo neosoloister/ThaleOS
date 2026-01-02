@@ -29,5 +29,6 @@ void vga_putc(char c);
 void vga_clear();
 void vga_write(char *s);
 void vga_scroll();
+void vga_fill(uint8_t fg, uint8_t bg);
 
 #endif

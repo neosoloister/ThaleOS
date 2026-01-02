@@ -73,3 +73,12 @@ void vga_scroll () {
         VGA[vga_index(VGA_ROW - 1, c)] = vga_entry(' ', VGA_ATTR);
     }
 }
+
+void vga_fill (uint8_t fg, uint8_t bg) {
+    for (int r = 0; r < VGA_ROW; r++) {
+        for (int c = 0; c< VGA_COLUMN; c++) {
+            int index = vga_index(r, c);
+            VGA[index] = vga_entry(' ', vga_attr(fg, bg));
+        }
+    }
+}
