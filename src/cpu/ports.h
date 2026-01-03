@@ -1,6 +1,5 @@
 #ifndef PORTS_H
 #define PORTS_H
-
 #include <stdint.h>
 
 unsigned char port_byte_in(unsigned short port);
