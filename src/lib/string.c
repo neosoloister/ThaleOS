@@ -25,3 +25,12 @@ int strncmp(const char *s1, const char *s2, uint32_t n) {
     }
     return 0;
 }
+
+void *memcpy(void *dest, const void *src, uint32_t n) {
+    char *d = (char *)dest;
+    const char *s = (const char *)src;
+    while (n--) {
+        *d++ = *s++;
+    }
+    return dest;
+}

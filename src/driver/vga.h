@@ -31,5 +31,7 @@ void vga_write(char *s);
 void vga_scroll();
 void vga_fill(uint8_t fg, uint8_t bg);
 void vga_set_cursor(uint8_t row, uint8_t col);
+uint8_t vga_get_cursor_row(void);
+uint8_t vga_get_cursor_column(void);
 
 #endif

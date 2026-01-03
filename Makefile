@@ -65,6 +65,7 @@ $(LINKER_LD):
 '  .rodata : { *(.rodata*) }' \
 '  .data   : { *(.data*) }' \
 '  .bss    : { *(COMMON) *(.bss*) }' \
+'  end = .;' \
 '}' > $(LINKER_LD)
 
 # =========

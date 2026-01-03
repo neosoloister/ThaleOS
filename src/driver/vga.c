@@ -31,6 +31,14 @@ void vga_set_cursor(uint8_t row, uint8_t col) {
     cursor_column = col;
 }
 
+uint8_t vga_get_cursor_row(void) {
+    return cursor_row;
+}
+
+uint8_t vga_get_cursor_column(void) {
+    return cursor_column;
+}
+
 void vga_putc(char c) {
     if (c == '\n') {
         cursor_column = 0;
