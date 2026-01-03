@@ -108,7 +108,7 @@ void isr_install(void) {
     port_byte_out(0x21, 0x01);
     port_byte_out(0xA1, 0x01);
     port_byte_out(0x21, 0x0);
-    port_byte_out(0xA1, 0x0); 
+    port_byte_out(0xA1, 0x0);
 
     // Install IRQs
     idt_set_gate(32, (uint32_t)irq0, 0x08, 0x8E);

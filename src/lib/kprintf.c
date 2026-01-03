@@ -3,11 +3,11 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-static void itoa (int num) {
+static void itoa(int num) {
     char buff[12];
     bool sign = 0;
     int i = 0;
-    if (num < 0){
+    if (num < 0) {
         sign = 1;
         num *= -1;
     }
@@ -16,7 +16,8 @@ static void itoa (int num) {
         num /= 10;
     } while (num != 0);
 
-    if (sign) buff[i++] = '-';
+    if (sign)
+        buff[i++] = '-';
     for (int l = 0, r = i - 1; l < r; l++, r--) {
         char tmp = buff[l];
         buff[l] = buff[r];
@@ -26,7 +27,7 @@ static void itoa (int num) {
     vga_write(buff);
 }
 
-static void htoa (uint32_t hex) {
+static void htoa(uint32_t hex) {
     static const char digits[] = "0123456789ABCDEF";
     char buff[9];
 
@@ -38,7 +39,7 @@ static void htoa (uint32_t hex) {
     vga_write(buff);
 }
 
-void kprintf (char *fmt, ...) {
+void kprintf(char *fmt, ...) {
     va_list args;
 
     va_start(args, fmt);
@@ -49,8 +50,7 @@ void kprintf (char *fmt, ...) {
             continue;
         }
         fmt++;
-        switch (*fmt)
-        {
+        switch (*fmt) {
         case 'd': {
             int d = va_arg(args, int);
             itoa(d);
@@ -70,6 +70,7 @@ void kprintf (char *fmt, ...) {
             uint32_t x = va_arg(args, uint32_t);
             htoa(x);
             break;
+
         }
         case 'p': {
             void *p = va_arg(args, void *);
