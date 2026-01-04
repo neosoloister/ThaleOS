@@ -6,10 +6,11 @@
 #include "../lib/kprintf.h"
 #include "../lib/mem.h"
 #include "shell.h"
+#include "../fs/fat.h"
 #include <stdint.h>
 #include <string.h>
 
-void kernel_main(void) {
+void kernel_init () {
     vga_clear();
     idt_init();
     isr_install();
@@ -17,24 +18,23 @@ void kernel_main(void) {
     init_timer(1000);
     init_mem();
 
-    void *ptr = malloc(4 * 1024 * 1024);
+    void *ptr = malloc(512);
     
     if (ptr == NULL) {
         kprintf("Memory allocation failed!\n");
     } else {
         kprintf("Memory allocation successful at %p\n", ptr);
+        free(ptr);
     }
-    void *test = malloc(32 * 1024 * 1024);
-    if (test == NULL) {
-        kprintf("Memory allocation failed!\n");
-    } else {
-        kprintf("Memory allocation successful at %p\n", ptr);
-    }
+
+    fat_init();
+    fat_list_root();
 
     __asm__ __volatile__("sti");
-
     kprintf("ThaleOS Kernel initialized.\n");
+}
 
-    mem_dump();
+void kernel_main(void) {
+    kernel_init();
     shell_init();
 }

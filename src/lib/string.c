@@ -34,3 +34,21 @@ void *memcpy(void *dest, const void *src, uint32_t n) {
     }
     return dest;
 }
+
+void *memset(void *s, int c, uint32_t n) {
+    unsigned char *p = s;
+    while (n--) {
+        *p++ = (unsigned char)c;
+    }
+    return s;
+}
+
+int memcmp(const void *s1, const void *s2, uint32_t n) {
+    const unsigned char *p1 = s1, *p2 = s2;
+    while (n--) {
+        if (*p1 != *p2)
+            return *p1 - *p2;
+        p1++, p2++;
+    }
+    return 0;
+}

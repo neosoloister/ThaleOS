@@ -49,7 +49,7 @@ ASM_OBJS := $(patsubst src/%.asm,$(BUILD)/%.o,$(ASM_SRCS))
 
 .PHONY: all run clean print-vars
 
-all: $(IMG)
+all: $(IMG) $(BUILD)/disk.img
 
 # =========================
 # Linker script (1 MiB load)
@@ -132,8 +132,9 @@ $(IMG): $(MBR_BIN) $(STAGE2_BIN) $(KERNEL_BIN) | $(BUILD)
 	dd if=$(STAGE2_BIN) of=$(IMG) conv=notrunc bs=$(SECTOR_SIZE) seek=1 status=none; \
 	dd if=$(KERNEL_BIN) of=$(IMG) conv=notrunc bs=$(SECTOR_SIZE) seek=$(KERNEL_LBA) status=none
 
-run: $(IMG)
-	$(QEMU) -drive format=raw,file=$(IMG)
+run: $(IMG) $(BUILD)/disk.img
+	$(QEMU) -drive format=raw,file=$(IMG),index=0,media=disk \
+	        -drive format=raw,file=$(BUILD)/disk.img,index=1,media=disk
 
 print-vars:
 	@echo "STAGE2_PAD_SECTORS=$(STAGE2_PAD_SECTORS)"
@@ -143,3 +144,12 @@ print-vars:
 
 clean:
 	rm -rf $(BUILD) $(LINKER_LD)
+
+# ======
+# Tools & FIlesystem
+# ======
+$(BUILD)/mkfat16: tools/mkfat16.c | $(BUILD)
+	gcc -o $@ $<
+
+$(BUILD)/disk.img: $(BUILD)/mkfat16 | $(BUILD)
+	./$(BUILD)/mkfat16 $@

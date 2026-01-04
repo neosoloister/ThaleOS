@@ -6,17 +6,27 @@
 #include <string.h>
 #include "../driver/rtc.h"
 
+#include <stddef.h>
+#include "../fs/fat.h"
+#include "../lib/mem.h"
+
 void cmd_help() {
     kprintf("Available commands:\n");
-    kprintf("  help     - Show this list\n");
-    kprintf("  clear    - Clear the screen\n");
-    kprintf("  time     - Show current uptime ticks\n");
-    kprintf("  shutdown - Halt the CPU\n");
-    kprintf("  reboot   - Reboot the system\n");
-    kprintf("  echo     - Echo the arguments\n");
-    kprintf("  date     - Show current RTC time\n");
+    kprintf("  help            - Show this list\n");
+    kprintf("  clear           - Clear the screen\n");
+    kprintf("  time            - Show current uptime ticks\n");
+    kprintf("  shutdown        - Halt the CPU\n");
+    kprintf("  reboot          - Reboot the system\n");
+    kprintf("  echo <msg>      - Echo the arguments\n");
+    kprintf("  date            - Show current RTC time\n");
+    kprintf("  ls              - List files in root directory\n");
+    kprintf("  touch <file>    - Create a new file\n");
+    kprintf("  rm <file>       - Delete a file\n");
+    kprintf("  mv <old> <new>  - Rename a file\n");
+    kprintf("  cp <src> <dest> - Copy a file\n");
 }
 
+/* ... existing commands ... */
 void cmd_shutdown() {
     kprintf("Shutting down...\n");
     port_word_out(0x604, 0x2000); // Shutdown
@@ -58,6 +68,85 @@ void cmd_echo(char *args) {
     kprintf("%s\n", args);
 }
 
+// Basic argument splitter: replaces first space with null and points to next char
+static char* split_args(char *args) {
+    char *p = args;
+    while (*p) {
+        if (*p == ' ') {
+            *p = 0;
+            return p + 1;
+        }
+        p++;
+    }
+    return NULL;
+}
+
+void cmd_ls() {
+    fat_list_root();
+}
+
+void cmd_touch(char *args) {
+    if (!args || strlen(args) == 0) {
+        kprintf("Usage: touch <filename>\n");
+        return;
+    }
+    if (fat_create(args) == 0) {
+        kprintf("Created file: %s\n", args);
+    }
+}
+
+void cmd_rm(char *args) {
+    if (!args || strlen(args) == 0) {
+        kprintf("Usage: rm <filename>\n");
+        return;
+    }
+    if (fat_delete(args) == 0) {
+        kprintf("Deleted file: %s\n", args);
+    }
+}
+
+void cmd_mv(char *args) {
+    char *dest = split_args(args);
+    if (!dest) {
+        kprintf("Usage: mv <old_name> <new_name>\n");
+        return;
+    }
+    if (fat_rename(args, dest) == 0) {
+        kprintf("Renamed %s to %s\n", args, dest);
+    }
+}
+
+void cmd_cp(char *args) {
+    char *dest = split_args(args);
+    if (!dest) {
+        kprintf("Usage: cp <src> <dest>\n");
+        return;
+    }
+    if (fat_copy(args, dest) == 0) {
+        kprintf("Copied %s to %s\n", args, dest);
+    }
+}
+
+void cmd_cat(char *args) {
+    if (!args || strlen(args) == 0) {
+        kprintf("Usage: cat <filename>\n");
+        return;
+    }
+    
+    // Allocate buffer for reading (max 512 bytes for now)
+    uint8_t *buf = malloc(512);
+    if (!buf) {
+        kprintf("Memory allocation failed.\n");
+        return;
+    }
+    
+    if (fat_read(args, buf, 512) == 0) {
+        kprintf("%s\n", buf);
+    }
+    
+    free(buf);
+}
+
 void shell_exec(char *input_buffer) {
     if (strcmp(input_buffer, "help") == 0) {
         cmd_help();
@@ -76,12 +165,30 @@ void shell_exec(char *input_buffer) {
     } 
     else if (strcmp(input_buffer, "date") == 0) {
         cmd_date();
-    } 
+    }
+    else if (strcmp(input_buffer, "ls") == 0) {
+        cmd_ls();
+    }
     else if (strncmp(input_buffer, "echo ", 5) == 0) {
         cmd_echo(input_buffer + 5);
     }
     else if (strcmp(input_buffer, "echo") == 0) {
         kprintf("\n");
+    }
+    else if (strncmp(input_buffer, "touch ", 6) == 0) {
+        cmd_touch(input_buffer + 6);
+    }
+    else if (strncmp(input_buffer, "rm ", 3) == 0) {
+        cmd_rm(input_buffer + 3);
+    }
+    else if (strncmp(input_buffer, "mv ", 3) == 0) {
+        cmd_mv(input_buffer + 3);
+    }
+    else if (strncmp(input_buffer, "cp ", 3) == 0) {
+        cmd_cp(input_buffer + 3);
+    }
+    else if (strncmp(input_buffer, "cat ", 4) == 0) {
+        cmd_cat(input_buffer + 4);
     }
     else if (strlen(input_buffer) > 0) {
         kprintf("Unknown command: %s\n", input_buffer);
