@@ -51,5 +51,6 @@ int fat_rename(char *old_name, char *new_name);
 int fat_copy(char *src, char *dest);
 int fat_exists(char *filename);
 int fat_read(char *filename, uint8_t *buffer, uint32_t count);
+int fat_write(char *filename, uint8_t *buffer, uint32_t count);
 
 #endif

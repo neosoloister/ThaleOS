@@ -47,7 +47,6 @@ void rtc_get_time(rtc_time_t *time) {
 
     registerB = get_rtc_register(0x0B);
 
-    // Convert BCD to binary values if necessary
     if (!(registerB & 0x04)) {
         second = (second & 0x0F) + ((second / 16) * 10);
         minute = (minute & 0x0F) + ((minute / 16) * 10);
@@ -57,17 +56,9 @@ void rtc_get_time(rtc_time_t *time) {
         year = (year & 0x0F) + ((year / 16) * 10);
     }
 
-    // Convert 12 hour clock to 24 hour clock if necessary
     if (!(registerB & 0x02) && (hour & 0x80)) {
         hour = ((hour & 0x7F) + 12) % 24;
     }
-
-    // Calculate full (4-digit) year
-    // CMOS year is 2 digits. Assume 20XX for now.
-    // In a real OS you typically read the century register but that varies.
-    // ThaleOS is likely modern enough that we can assume 21st century or just report 2 digit.
-    // Let's keep it simple and just store the 2 digit or simple conversion for now.
-    // The struct has uint8_t year, so we fit 2 digits perfectly.
     
     time->second = second;
     time->minute = minute;

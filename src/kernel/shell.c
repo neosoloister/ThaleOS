@@ -24,6 +24,8 @@ void cmd_help() {
     kprintf("  rm <file>       - Delete a file\n");
     kprintf("  mv <old> <new>  - Rename a file\n");
     kprintf("  cp <src> <dest> - Copy a file\n");
+    kprintf("  cat <file>      - Read a file\n");
+    kprintf("  write <f> <txt> - Write text to file\n");
 }
 
 /* ... existing commands ... */
@@ -147,6 +149,27 @@ void cmd_cat(char *args) {
     free(buf);
 }
 
+void cmd_write(char *args) {
+    char *content = split_args(args);
+    if (!content) {
+        kprintf("Usage: write <filename> <text>\n");
+        return;
+    }
+    
+    // Simple quote stripping if present
+    if (content[0] == '"') {
+        content++;
+        int len = strlen(content);
+        if (len > 0 && content[len-1] == '"') content[len-1] = 0;
+    }
+    
+    if (fat_write(args, (uint8_t*)content, strlen(content)) == 0) {
+        kprintf("Written to %s\n", args);
+    } else {
+        kprintf("Write failed.\n");
+    }
+}
+
 void shell_exec(char *input_buffer) {
     if (strcmp(input_buffer, "help") == 0) {
         cmd_help();
@@ -189,6 +212,9 @@ void shell_exec(char *input_buffer) {
     }
     else if (strncmp(input_buffer, "cat ", 4) == 0) {
         cmd_cat(input_buffer + 4);
+    }
+    else if (strncmp(input_buffer, "write ", 6) == 0) {
+        cmd_write(input_buffer + 6);
     }
     else if (strlen(input_buffer) > 0) {
         kprintf("Unknown command: %s\n", input_buffer);
