@@ -26,9 +26,14 @@ void cmd_help() {
     kprintf("  cp <src> <dest> - Copy a file\n");
     kprintf("  cat <file>      - Read a file\n");
     kprintf("  write <f> <txt> - Write text to file\n");
+    kprintf("  mem_dump         - Dump all of memories\n");
 }
 
 /* ... existing commands ... */
+void cmd_memdump() {
+    mem_dump();
+}
+
 void cmd_shutdown() {
     kprintf("Shutting down...\n");
     port_word_out(0x604, 0x2000); // Shutdown
@@ -215,6 +220,9 @@ void shell_exec(char *input_buffer) {
     }
     else if (strncmp(input_buffer, "write ", 6) == 0) {
         cmd_write(input_buffer + 6);
+    }
+    else if (strncmp(input_buffer, "mem_dump ", 6) == 0) {
+        cmd_memdump();
     }
     else if (strlen(input_buffer) > 0) {
         kprintf("Unknown command: %s\n", input_buffer);

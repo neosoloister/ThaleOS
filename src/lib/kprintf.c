@@ -39,6 +39,28 @@ static void htoa(uint32_t hex) {
     vga_write(buff);
 }
 
+
+static void ftoa(double f, int decimals) {
+    if (f < 0) {
+        vga_putc('-');
+        f *= -1;
+    }
+
+    int int_part = (int)f;
+    itoa(int_part);
+    
+    if (decimals > 0) {
+        vga_putc('.');
+        f -= int_part;
+        for (int i = 0; i < decimals; i++) {
+            f *= 10;
+            int digit = (int)f;
+            vga_putc('0' + digit);
+            f -= digit;
+        }
+    }
+}
+
 void kprintf(char *fmt, ...) {
     va_list args;
 
@@ -76,6 +98,11 @@ void kprintf(char *fmt, ...) {
             void *p = va_arg(args, void *);
             vga_write("0x");
             htoa((uint32_t)p);
+            break;
+        }
+        case 'f': {
+            double f = va_arg(args, double);
+            ftoa(f, 6);
             break;
         }
         case '%': {

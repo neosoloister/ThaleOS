@@ -5,10 +5,12 @@
 #include "../driver/vga.h"
 #include "../lib/kprintf.h"
 #include "../lib/mem.h"
+
 #include "shell.h"
 #include "../fs/fat.h"
 #include <stdint.h>
 #include <string.h>
+
 
 void kernel_init () {
     vga_clear();
@@ -36,5 +38,6 @@ void kernel_init () {
 
 void kernel_main(void) {
     kernel_init();
+    vga_clear();
     shell_init();
 }
